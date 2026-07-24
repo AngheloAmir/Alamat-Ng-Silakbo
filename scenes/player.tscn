@@ -1,0 +1,77 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/camera_rig.gd" id="2_rig"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
+radius = 0.45
+height = 1.8
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_player"]
+radius = 0.45
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cyan"]
+albedo_color = Color(0.12, 0.65, 0.95, 1)
+roughness = 0.4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_arrow_shaft"]
+top_radius = 0.025
+bottom_radius = 0.025
+height = 1.1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wood_shaft"]
+albedo_color = Color(0.55, 0.38, 0.22, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_arrow_tip"]
+top_radius = 0.0
+bottom_radius = 0.08
+height = 0.3
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gold_tip"]
+albedo_color = Color(1.0, 0.8, 0.2, 1)
+metallic = 0.9
+roughness = 0.2
+
+[node name="Player" type="CharacterBody3D"]
+collision_layer = 1
+collision_mask = 1
+script = ExtResource("1_player")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_player")
+
+[node name="CapsuleMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("CapsuleMesh_player")
+surface_material_override/0 = SubResource("StandardMaterial3D_cyan")
+
+[node name="WeaponMount" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, -0.6)
+
+[node name="CameraRig" type="SpringArm3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+spring_length = 4.0
+margin = 0.2
+script = ExtResource("2_rig")
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
+current = true
+fov = 75.0
+far = 800.0
+
+[node name="HeldArrow" type="Node3D" parent="CameraRig/Camera3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.38, -0.22, -0.65)
+visible = false
+
+[node name="Shaft" type="MeshInstance3D" parent="CameraRig/Camera3D/HeldArrow"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0)
+mesh = SubResource("CylinderMesh_arrow_shaft")
+surface_material_override/0 = SubResource("StandardMaterial3D_wood_shaft")
+
+[node name="Tip" type="MeshInstance3D" parent="CameraRig/Camera3D/HeldArrow"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, -0.6)
+mesh = SubResource("CylinderMesh_arrow_tip")
+surface_material_override/0 = SubResource("StandardMaterial3D_gold_tip")

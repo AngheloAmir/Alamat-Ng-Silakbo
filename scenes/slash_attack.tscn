@@ -1,0 +1,31 @@
+[gd_scene load_steps=5 format=3 uid="uid://slashattack123"]
+
+[ext_resource type="Script" path="res://scripts/weapons/slash_attack.gd" id="1_slash"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_blade"]
+size = Vector3(0.15, 0.15, 2.0)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_blade"]
+albedo_color = Color(1, 0.85, 0.2, 1)
+emission_enabled = true
+emission = Color(1, 0.7, 0.1, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_hitbox"]
+size = Vector3(1.2, 0.6, 2.2)
+
+[node name="SlashAttack" type="Node3D"]
+script = ExtResource("1_slash")
+
+[node name="BladeMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.1)
+mesh = SubResource("BoxMesh_blade")
+surface_material_override/0 = SubResource("StandardMaterial3D_blade")
+
+[node name="Area3D" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.1)
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("BoxShape3D_hitbox")

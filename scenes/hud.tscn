@@ -1,0 +1,140 @@
+[gd_scene load_steps=2 format=3 uid="uid://hudui123"]
+
+[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 420.0
+offset_bottom = 200.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "=== GODOT 4 OPEN WORLD DEMO ==="
+
+[node name="FPSLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "FPS: 60"
+
+[node name="TimeLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Time of Day: NOON (Press 'Y' to Advance)"
+
+[node name="WeatherLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Season: SPRING (Press 'T' to Cycle)"
+
+[node name="MobCountLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Active Mobs: 0 / 16"
+
+[node name="RespawnTimerLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Next Respawn In: 20.0s"
+
+[node name="ControlsPanel" type="PanelContainer" parent="."]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -300.0
+offset_right = 470.0
+offset_bottom = -20.0
+grow_vertical = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="ControlsPanel"]
+layout_mode = 2
+
+[node name="ControlsLabel" type="Label" parent="ControlsPanel/MarginContainer"]
+layout_mode = 2
+text = "CONTROLS GUIDE:
+• WASD : Move Character
+• Spacebar : Standard Jump
+• Q : Super High Jump
+• E : Toggle 3X Fly Mode ON / OFF (72 m/s)
+• Keys 1-4 / Scroll : Select Weapon Slot
+• Left Click : Use Weapon (Hold/Release for Bow Aim)
+• Right Click : Basketball High-Arc Thrown Axe
+• Y : Advance Time of Day (Sunrise, Noon, Dusk, Night)
+• T : Cycle Seasons (Spring, Summer, Autumn, Winter)
+• R : Spawn Mob at Position (Unlimited)"
+
+[node name="HotbarPanel" type="PanelContainer" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -340.0
+offset_top = -80.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="HotbarPanel"]
+layout_mode = 2
+alignment = 1
+
+[node name="Slot1" type="PanelContainer" parent="HotbarPanel/HBoxContainer"]
+custom_minimum_size = Vector2(70, 50)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HotbarPanel/HBoxContainer/Slot1"]
+layout_mode = 2
+text = "[1] SWORD"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot2" type="PanelContainer" parent="HotbarPanel/HBoxContainer"]
+custom_minimum_size = Vector2(70, 50)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HotbarPanel/HBoxContainer/Slot2"]
+layout_mode = 2
+text = "[2] BOW"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot3" type="PanelContainer" parent="HotbarPanel/HBoxContainer"]
+custom_minimum_size = Vector2(70, 50)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HotbarPanel/HBoxContainer/Slot3"]
+layout_mode = 2
+text = "[3] SPEAR"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot4" type="PanelContainer" parent="HotbarPanel/HBoxContainer"]
+custom_minimum_size = Vector2(70, 50)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HotbarPanel/HBoxContainer/Slot4"]
+layout_mode = 2
+text = "[4] HAMMER"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Crosshair" type="CenterContainer" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -10.0
+offset_top = -10.0
+offset_right = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CrosshairLabel" type="Label" parent="Crosshair"]
+layout_mode = 2
+text = "+"

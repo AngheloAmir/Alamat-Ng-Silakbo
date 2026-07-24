@@ -1,0 +1,42 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Godot-specific export settings & build outputs
+export_presets.cfg
+export_credentials.cfg
+
+# Godot 3 import folder & translation cache
+.import/
+*.translation
+
+# Mono / C# (if added in the future)
+.mono/
+mono_project/
+data_*/
+[bB]in/
+[oO]bj/
+
+# Builds / Artifacts
+build/
+dist/
+*.apk
+*.aab
+*.exe
+*.zip
+*.tar.gz
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosv
+*.sln
+*.csproj
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
