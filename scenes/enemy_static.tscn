@@ -1,6 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://enemystatic1"]
 
-[ext_resource type="Script" path="res://scripts/enemies/static_enemy.gd" id="1_static"]
+[ext_resource type="Script" path="res://scripts/layers/6mobs/static_enemy.gd" id="1_static"]
+
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_enemy"]
 radius = 0.45

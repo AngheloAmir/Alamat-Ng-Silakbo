@@ -1,10 +1,21 @@
-[gd_scene load_steps=8 format=3 uid="uid://mainworld123"]
+[gd_scene load_steps=19 format=3]
 
-[ext_resource type="Script" path="res://scripts/terrain.gd" id="1_terrain"]
-[ext_resource type="PackedScene" uid="uid://player12345" path="res://scenes/player.tscn" id="2_player"]
-[ext_resource type="Script" path="res://scripts/spawner.gd" id="3_spawner"]
-[ext_resource type="PackedScene" uid="uid://hudui123" path="res://scenes/hud.tscn" id="4_hud"]
-[ext_resource type="Script" path="res://scripts/weather_manager.gd" id="5_weather"]
+[ext_resource type="Script" path="res://scripts/layers/0hero/hero_layer.gd" id="0_hero"]
+[ext_resource type="Script" path="res://scripts/layers/1ground/terrain_layer.gd" id="1_terrain"]
+[ext_resource type="Script" path="res://scripts/layers/2wall/wall_layer.gd" id="2_wall"]
+[ext_resource type="Script" path="res://scripts/layers/3block/block_layer.gd" id="3_block"]
+[ext_resource type="Script" path="res://scripts/layers/4interactable/interactable_layer.gd" id="4_interactable"]
+[ext_resource type="Script" path="res://scripts/layers/5pickups/pickup_layer.gd" id="5_pickups"]
+[ext_resource type="Script" path="res://scripts/layers/6mobs/mob_manager.gd" id="6_mobmgr"]
+[ext_resource type="Script" path="res://scripts/layers/6mobs/mob_spawner.gd" id="6_spawner"]
+[ext_resource type="Script" path="res://scripts/layers/7projectile/projectile_layer.gd" id="7_projlayer"]
+[ext_resource type="Script" path="res://scripts/layers/8npc/npc_layer.gd" id="8_npc"]
+[ext_resource type="Script" path="res://scripts/layers/9effects/effect_manager.gd" id="9_fxmgr"]
+[ext_resource type="Script" path="res://scripts/layers/10environment/weather_manager.gd" id="10_weather"]
+[ext_resource type="Script" path="res://scripts/layers/11water/water_layer.gd" id="11_water"]
+[ext_resource type="Script" path="res://scripts/layers/12botdecision/bot_decision_manager.gd" id="12_botmgr"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="player_scene"]
+[ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="hud_scene"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.35, 0.65, 0.95, 1)
@@ -21,14 +32,60 @@ sky = SubResource("Sky_env")
 ambient_light_color = Color(0.8, 0.85, 0.9, 1)
 tonemap_mode = 2
 glow_enabled = true
-fog_enabled = false
+fog_enabled = true
 fog_mode = 0
 fog_light_color = Color(0.68, 0.8, 0.92, 1)
+fog_depth_begin = 35.0
+fog_depth_end = 180.0
 fog_sky_affect = 1.0
-fog_depth_begin = 100.0
-fog_depth_end = 550.0
+
 
 [node name="Main" type="Node3D"]
+
+[node name="HeroLayer" type="Node" parent="."]
+script = ExtResource("0_hero")
+
+[node name="Terrain" type="Node3D" parent="."]
+script = ExtResource("1_terrain")
+
+[node name="WallLayer" type="Node3D" parent="."]
+script = ExtResource("2_wall")
+
+[node name="BlockLayer" type="Node3D" parent="."]
+script = ExtResource("3_block")
+
+[node name="InteractableLayer" type="Node3D" parent="."]
+script = ExtResource("4_interactable")
+
+[node name="PickupLayer" type="Node3D" parent="."]
+script = ExtResource("5_pickups")
+
+[node name="MobManager" type="Node3D" parent="."]
+script = ExtResource("6_mobmgr")
+
+[node name="Spawner" type="Node3D" parent="."]
+script = ExtResource("6_spawner")
+
+[node name="SpawnTimer" type="Timer" parent="Spawner"]
+one_shot = false
+
+[node name="ProjectileLayer" type="Node3D" parent="."]
+script = ExtResource("7_projlayer")
+
+[node name="NpcLayer" type="Node3D" parent="."]
+script = ExtResource("8_npc")
+
+[node name="EffectManager" type="Node3D" parent="."]
+script = ExtResource("9_fxmgr")
+
+[node name="WeatherManager" type="Node" parent="."]
+script = ExtResource("10_weather")
+
+[node name="WaterLayer" type="Node3D" parent="."]
+script = ExtResource("11_water")
+
+[node name="BotDecisionManager" type="Node" parent="."]
+script = ExtResource("12_botmgr")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_world")
@@ -38,19 +95,7 @@ transform = Transform3D(0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, -0.75
 shadow_enabled = true
 directional_shadow_max_distance = 350.0
 
-[node name="Terrain" type="Node3D" parent="."]
-script = ExtResource("1_terrain")
-
-[node name="Player" parent="." instance=ExtResource("2_player")]
+[node name="Player" parent="." instance=ExtResource("player_scene")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 
-[node name="Spawner" type="Node3D" parent="."]
-script = ExtResource("3_spawner")
-
-[node name="SpawnTimer" type="Timer" parent="Spawner"]
-one_shot = false
-
-[node name="WeatherManager" type="Node" parent="."]
-script = ExtResource("5_weather")
-
-[node name="HUD" parent="." instance=ExtResource("4_hud")]
+[node name="HUD" parent="." instance=ExtResource("hud_scene")]

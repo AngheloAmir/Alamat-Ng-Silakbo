@@ -1,7 +1,8 @@
 [gd_scene format=3 uid="uid://d1scsrims4pd0"]
 
-[ext_resource type="Script" uid="uid://bx7gdibeefs11" path="res://scripts/player.gd" id="1_player"]
-[ext_resource type="Script" uid="uid://c1uxffnbgulcs" path="res://scripts/camera_rig.gd" id="2_rig"]
+[ext_resource type="Script" path="res://scripts/client/player/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/client/player/camera_rig.gd" id="2_rig"]
+
 [ext_resource type="PackedScene" uid="uid://b5hvnaajfvvhx" path="res://assets/kaykit/characters/Barbarian.glb" id="4_qlg0r"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]

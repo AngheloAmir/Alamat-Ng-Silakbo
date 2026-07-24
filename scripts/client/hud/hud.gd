@@ -1,0 +1,142 @@
+# ==============================================================================
+# HUD CONTROLLER (scripts/client/hud/hud.gd)
+# ==============================================================================
+# Displays player controls guide, mob counter, block counter, ground furniture counter,
+# interactable counter, respawn countdown, FPS, and hotbar.
+# Listens to Server hub signals.
+# ==============================================================================
+extends CanvasLayer
+
+@onready var mob_count_label: Label = get_node_or_null("MarginContainer/VBoxContainer/MobCountLabel")
+@onready var block_count_label: Label = get_node_or_null("MarginContainer/VBoxContainer/BlockCountLabel")
+@onready var furniture_count_label: Label = get_node_or_null("MarginContainer/VBoxContainer/FurnitureCountLabel")
+@onready var interactable_count_label: Label = get_node_or_null("MarginContainer/VBoxContainer/InteractableCountLabel")
+@onready var respawn_timer_label: Label = get_node_or_null("MarginContainer/VBoxContainer/RespawnTimerLabel")
+@onready var fps_label: Label = get_node_or_null("MarginContainer/VBoxContainer/FPSLabel")
+@onready var weather_label: Label = get_node_or_null("MarginContainer/VBoxContainer/WeatherLabel")
+@onready var time_label: Label = get_node_or_null("MarginContainer/VBoxContainer/TimeLabel")
+
+@onready var slot_1: PanelContainer = get_node_or_null("HotbarPanel/HBoxContainer/Slot1")
+@onready var slot_2: PanelContainer = get_node_or_null("HotbarPanel/HBoxContainer/Slot2")
+@onready var slot_3: PanelContainer = get_node_or_null("HotbarPanel/HBoxContainer/Slot3")
+@onready var slot_4: PanelContainer = get_node_or_null("HotbarPanel/HBoxContainer/Slot4")
+@onready var slot_5: PanelContainer = get_node_or_null("HotbarPanel/HBoxContainer/Slot5")
+@onready var slot_6: PanelContainer = get_node_or_null("HotbarPanel/HBoxContainer/Slot6")
+@onready var slot_7: PanelContainer = get_node_or_null("HotbarPanel/HBoxContainer/Slot7")
+@onready var slot_8: PanelContainer = get_node_or_null("HotbarPanel/HBoxContainer/Slot8")
+
+var fps_update_timer: float = 0.0
+
+
+func _ready() -> void:
+	Server.mob_count_changed.connect(_on_mob_count_changed)
+	Server.block_count_changed.connect(_on_block_count_changed)
+	Server.furniture_count_changed.connect(_on_furniture_count_changed)
+	Server.interactable_count_changed.connect(_on_interactable_count_changed)
+	Server.respawn_timer_tick.connect(_on_respawn_timer_tick)
+
+	var weather_mgr: Node = Server.get_layer_manager(10)
+	if not weather_mgr:
+		weather_mgr = get_node_or_null("../WeatherManager")
+	if weather_mgr:
+		if weather_mgr.has_signal("season_changed"):
+			weather_mgr.connect("season_changed", _on_season_changed)
+		if weather_mgr.has_method("get_current_season_name"):
+			_on_season_changed(weather_mgr.call("get_current_season_name"))
+
+	call_deferred("_connect_player_signals")
+	_on_mob_count_changed(Server.active_mobs.size(), Server.MAX_MOBS)
+	_on_block_count_changed(Server.active_blocks.size())
+	_on_furniture_count_changed(Server.active_furniture.size())
+	_on_interactable_count_changed(Server.active_interactables.size())
+	_highlight_hotbar_slot(0)
+
+
+func _connect_player_signals() -> void:
+	var player: Node3D = Server.get_player()
+	if player and player.has_signal("weapon_slot_changed"):
+		player.connect("weapon_slot_changed", _on_weapon_slot_changed)
+
+
+func _process(delta: float) -> void:
+	fps_update_timer += delta
+	if fps_update_timer >= 0.05:
+		fps_update_timer = 0.0
+		if fps_label:
+			var frame_time: float = maxf(delta, 0.00001)
+			var current_fps: float = Performance.get_monitor(Performance.TIME_FPS)
+			var process_ms: float = frame_time * 1000.0
+			fps_label.text = "FPS: %.0f (%.1f ms)" % [current_fps, process_ms]
+			if current_fps >= 55.0:
+				fps_label.modulate = Color(0.4, 1.0, 0.4)
+			elif current_fps >= 30.0:
+				fps_label.modulate = Color(1.0, 0.9, 0.3)
+			else:
+				fps_label.modulate = Color(1.0, 0.3, 0.3)
+
+	var weather_mgr: Node = Server.get_layer_manager(10)
+	if not weather_mgr:
+		weather_mgr = get_node_or_null("../WeatherManager")
+	if weather_mgr and weather_mgr.has_method("get_time_phase_name") and time_label:
+		var time_phase: String = weather_mgr.call("get_time_phase_name")
+		time_label.text = "Time of Day: %s (Press 'Y' to Advance)" % time_phase
+
+
+func _on_weapon_slot_changed(slot_idx: int) -> void:
+	_highlight_hotbar_slot(slot_idx)
+
+
+func _highlight_hotbar_slot(active_idx: int) -> void:
+	var slots: Array[PanelContainer] = [slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8]
+	for i in range(slots.size()):
+		var slot_panel: PanelContainer = slots[i]
+		if not slot_panel:
+			continue
+		if i == active_idx:
+			slot_panel.modulate = Color(1.4, 1.2, 0.4)
+			slot_panel.scale = Vector2(1.1, 1.1)
+		else:
+			slot_panel.modulate = Color(0.7, 0.7, 0.7)
+			slot_panel.scale = Vector2(1.0, 1.0)
+
+
+func _on_season_changed(season_name: String) -> void:
+	if weather_label:
+		weather_label.text = "Season: %s (Press 'T' to Cycle)" % season_name
+
+
+func _on_mob_count_changed(current_count: int, max_cap: int) -> void:
+	if mob_count_label:
+		mob_count_label.text = "Active Mobs: %d / %d" % [current_count, max_cap]
+		if current_count >= max_cap:
+			mob_count_label.modulate = Color(1.0, 0.4, 0.4)
+		else:
+			mob_count_label.modulate = Color(0.4, 1.0, 0.5)
+
+
+func _on_block_count_changed(current_count: int) -> void:
+	if block_count_label:
+		block_count_label.text = "Active Building Blocks: %d" % current_count
+		block_count_label.modulate = Color(0.3, 0.75, 1.0) # Light blue
+
+
+func _on_furniture_count_changed(current_count: int) -> void:
+	if furniture_count_label:
+		furniture_count_label.text = "Active Ground Furniture: %d" % current_count
+		furniture_count_label.modulate = Color(1.0, 0.7, 0.3) # Warm orange
+
+
+func _on_interactable_count_changed(current_count: int) -> void:
+	if interactable_count_label:
+		interactable_count_label.text = "Active Interactables: %d" % current_count
+		interactable_count_label.modulate = Color(0.3, 1.0, 0.5) # Light green
+
+
+func _on_respawn_timer_tick(seconds_left: float) -> void:
+	if respawn_timer_label:
+		if Server.active_mobs.size() >= Server.MAX_MOBS:
+			respawn_timer_label.text = "Respawn Timer: PAUSED (Max Cap Reached)"
+			respawn_timer_label.modulate = Color(0.8, 0.8, 0.8)
+		else:
+			respawn_timer_label.text = "Next Respawn In: %.1fs" % seconds_left
+			respawn_timer_label.modulate = Color(1.0, 0.9, 0.3)

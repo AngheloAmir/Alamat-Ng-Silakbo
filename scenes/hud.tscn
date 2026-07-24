@@ -1,6 +1,7 @@
 [gd_scene load_steps=2 format=3 uid="uid://hudui123"]
 
-[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
+[ext_resource type="Script" path="res://scripts/client/hud/hud.gd" id="1_hud"]
+
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_hud")
@@ -34,9 +35,23 @@ text = "Season: SPRING (Press 'T' to Cycle)"
 layout_mode = 2
 text = "Active Mobs: 0 / 16"
 
+[node name="BlockCountLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Active Building Blocks: 0"
+
+[node name="FurnitureCountLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Active Ground Furniture: 0"
+
+[node name="InteractableCountLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Active Interactables: 0"
+
+
 [node name="RespawnTimerLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Next Respawn In: 20.0s"
+
 
 [node name="ControlsPanel" type="PanelContainer" parent="."]
 anchors_preset = 2
@@ -63,7 +78,17 @@ text = "CONTROLS GUIDE:
 • Right Click : Toggle FPS Aim (Bow/Crossbow) / Thrown Axe (Melee)
 • Y : Advance Time of Day (Sunrise, Noon, Dusk, Night)
 • T : Cycle Seasons (Spring, Summer, Autumn, Winter)
-• R : Spawn Mob at Position (Unlimited)"
+• R : Spawn Mob at Position (Single)
+• X : Spawn 50 Random Mobs (Batch Test)
+• C : Spawn 200 Blue Building Blocks (1 Draw Call)
+• V : Spawn 50 Green Interactable Cubes (Turns Orange)
+• B : Spawn 50 Block Debris Particle Explosions
+• N : Spawn 50 Complex Indestructible Furniture (Falls & Stacks)
+• M : Clear All World Entities (Mobs, Blocks, Furniture)"
+
+
+
+
 
 [node name="HotbarPanel" type="PanelContainer" parent="."]
 anchors_preset = 3

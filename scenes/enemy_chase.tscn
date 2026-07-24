@@ -1,6 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://enemychase3"]
 
-[ext_resource type="Script" path="res://scripts/enemies/chase_enemy.gd" id="1_chase"]
+[ext_resource type="Script" path="res://scripts/layers/6mobs/chase_enemy.gd" id="1_chase"]
+
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_enemy"]
 radius = 0.45
