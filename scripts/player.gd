@@ -175,8 +175,15 @@ func _ready() -> void:
 	if gm and gm.has_method("register_player"):
 		gm.call("register_player", self)
 
+	if camera:
+		camera.h_offset = 0.0
+		camera.v_offset = 0.65
+
 	_update_held_weapon_prop()
 	emit_signal("weapon_slot_changed", int(current_weapon))
+
+
+var is_fps_aim_toggled: bool = false
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -189,6 +196,16 @@ func _unhandled_input(event: InputEvent) -> void:
 	# Key 'R' -> Manually spawn a random-trait mob at player position (Unlimited)
 	elif event.is_action_pressed("spawn_mob_manual"):
 		_spawn_manual_random_mob()
+
+	# Right Click -> Toggle FPS Aim Mode for Bow / Crossbow
+	elif event.is_action_pressed("attack_axe"):
+		if current_weapon == WeaponType.BOW or current_weapon == WeaponType.CROSSBOW:
+			is_fps_aim_toggled = !is_fps_aim_toggled
+			if is_fps_aim_toggled:
+				_start_bow_aim_camera_pan()
+			else:
+				_stop_bow_aim_camera_pan()
+			get_viewport().set_input_as_handled()
 
 	# Weapon Slot Hotkey Selection (Keys 1-8)
 	elif event is InputEventKey and event.pressed:
@@ -213,8 +230,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _select_weapon_slot(slot: WeaponType) -> void:
 	if current_weapon != slot:
-		if is_charging_bow:
-			_reset_bow_aim()
+		if is_fps_aim_toggled:
+			is_fps_aim_toggled = false
+			_stop_bow_aim_camera_pan()
 		current_weapon = slot
 		_update_held_weapon_prop()
 		print("[Player] Weapon Switched to Slot:", current_weapon)
@@ -237,6 +255,11 @@ func _set_node_visible_recursive(node: Node, is_vis: bool) -> void:
 		_set_node_visible_recursive(child, is_vis)
 
 
+var is_aiming_bow: bool = false
+var camera_pan_tween: Tween = null
+var mount_aim_tween: Tween = null
+
+
 func _reset_bow_aim() -> void:
 	is_charging_bow = false
 	bow_charge_time = 0.0
@@ -244,6 +267,83 @@ func _reset_bow_aim() -> void:
 		held_arrow.visible = false
 	if character_model:
 		character_model.visible = true
+	_stop_bow_aim_camera_pan()
+
+
+func _start_bow_aim_camera_pan() -> void:
+	if is_aiming_bow:
+		return
+	is_aiming_bow = true
+	
+	# Hide character body so it doesn't block screen vision
+	if character_model:
+		character_model.visible = false
+
+	# Reparent weapon and offhand mounts to camera for static screen-view placement
+	if weapon_mount and camera and weapon_mount.get_parent() != camera:
+		weapon_mount.reparent(camera)
+	if offhand_mount and camera and offhand_mount.get_parent() != camera:
+		offhand_mount.reparent(camera)
+
+	# 0.1s Smooth Camera Pan to Eye Level FPS Aim
+	if camera_pan_tween and camera_pan_tween.is_running():
+		camera_pan_tween.kill()
+	camera_pan_tween = create_tween().set_parallel(true)
+	if camera_rig:
+		camera_pan_tween.tween_property(camera_rig, "spring_length", 0.1, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	if camera:
+		camera_pan_tween.tween_property(camera, "position", Vector3(0.0, 0.1, -0.4), 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		camera_pan_tween.tween_property(camera, "h_offset", 0.0, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		camera_pan_tween.tween_property(camera, "v_offset", 0.0, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	
+	# Position Bow and Shield static to camera view (pushed to screen edges & rotated 180 deg)
+	if mount_aim_tween and mount_aim_tween.is_running():
+		mount_aim_tween.kill()
+	mount_aim_tween = create_tween().set_parallel(true)
+	if weapon_mount:
+		mount_aim_tween.tween_property(weapon_mount, "position", Vector3(0.55, -0.32, -0.75), 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		mount_aim_tween.tween_property(weapon_mount, "rotation_degrees", Vector3(-5.0, 0.0, -10.0), 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	if offhand_mount:
+		mount_aim_tween.tween_property(offhand_mount, "position", Vector3(-0.65, -0.40, -0.75), 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		mount_aim_tween.tween_property(offhand_mount, "rotation_degrees", Vector3(-10.0, 0.0, 15.0), 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+func _stop_bow_aim_camera_pan() -> void:
+	if not is_aiming_bow:
+		return
+	is_aiming_bow = false
+	
+	# Show character body again
+	if character_model:
+		character_model.visible = true
+
+	# Reparent weapon and offhand mounts back to Player root
+	if weapon_mount and weapon_mount.get_parent() != self:
+		weapon_mount.reparent(self)
+	if offhand_mount and offhand_mount.get_parent() != self:
+		offhand_mount.reparent(self)
+
+	# 0.1s Smooth Camera Pan back to 3rd Person View
+	if camera_pan_tween and camera_pan_tween.is_running():
+		camera_pan_tween.kill()
+	camera_pan_tween = create_tween().set_parallel(true)
+	if camera_rig:
+		camera_pan_tween.tween_property(camera_rig, "spring_length", 4.0, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	if camera:
+		camera_pan_tween.tween_property(camera, "position", Vector3.ZERO, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		camera_pan_tween.tween_property(camera, "h_offset", 0.0, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		camera_pan_tween.tween_property(camera, "v_offset", 0.65, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	
+	# Return weapon mount and offhand mount to standard ready stance
+	if mount_aim_tween and mount_aim_tween.is_running():
+		mount_aim_tween.kill()
+	mount_aim_tween = create_tween().set_parallel(true)
+	if weapon_mount:
+		mount_aim_tween.tween_property(weapon_mount, "position", default_mount_pos, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		mount_aim_tween.tween_property(weapon_mount, "rotation_degrees", default_mount_rot, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	if offhand_mount:
+		mount_aim_tween.tween_property(offhand_mount, "position", Vector3(-0.35, 0.75, -0.25), 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		mount_aim_tween.tween_property(offhand_mount, "rotation_degrees", Vector3(0, 90, 0), 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 func _update_character_animation(moving: bool) -> void:
@@ -281,37 +381,6 @@ func _physics_process(delta: float) -> void:
 	if attack_cooldown > 0.0:
 		attack_cooldown -= delta
 
-	# --- FPS BOW AIMING & HOLDING ARROW ON RIGHT SIDE ---
-	if current_weapon == WeaponType.BOW:
-		if Input.is_action_pressed("attack_slash"):
-			is_charging_bow = true
-			bow_charge_time = minf(bow_charge_time + delta, 1.2)
-			
-			# Hide player character model so it doesn't block FPS vision
-			if character_model:
-				character_model.visible = false
-				
-			# Show Held Arrow on right side of FPS view
-			if held_arrow:
-				held_arrow.visible = true
-				var pull_back: float = (bow_charge_time / 1.2) * 0.15
-				held_arrow.position = Vector3(0.38, -0.22, -0.65 + pull_back)
-
-			# Lerp camera position from 4.0m 3rd-person offset to -0.4m FPS eye-level position
-			camera.position = camera.position.lerp(Vector3(0.0, 0.1, -0.4), delta * 18.0)
-
-		elif Input.is_action_just_released("attack_slash") and is_charging_bow:
-			_perform_bow_attack_charged(bow_charge_time)
-			_reset_bow_aim()
-
-	if not is_charging_bow:
-		if held_arrow and held_arrow.visible:
-			held_arrow.visible = false
-		if character_model and not character_model.visible:
-			character_model.visible = true
-		# Return camera position smoothly to standard 3rd person 4.0m offset
-		camera.position = camera.position.lerp(Vector3(0.0, 0.0, 4.0), delta * 8.0)
-
 	# --- FLY MODE CONTROLS (TOGGLED VIA KEY 'E' - 72 m/s) ---
 	if is_flying:
 		var fly_move: Vector3 = Vector3.ZERO
@@ -330,11 +399,12 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		_update_character_animation(fly_move.length() > 0.1)
 		
-		if attack_cooldown <= 0.0 and current_weapon != WeaponType.BOW:
+		if attack_cooldown <= 0.0:
 			if Input.is_action_just_pressed("attack_slash"):
 				_perform_active_weapon_attack()
 			elif Input.is_action_just_pressed("attack_axe"):
-				_perform_axe_attack()
+				if current_weapon != WeaponType.BOW and current_weapon != WeaponType.CROSSBOW:
+					_perform_axe_attack()
 		return
 
 	# --- GROUNDED & JUMP PHYSICS ---
@@ -370,12 +440,13 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_update_character_animation(is_moving)
 
-	# Handle Non-Bow Attacks & Secondary Axe Attack
+	# Handle Weapon Attacks & Secondary Thrown Axe
 	if attack_cooldown <= 0.0:
-		if current_weapon != WeaponType.BOW and Input.is_action_just_pressed("attack_slash"):
+		if Input.is_action_just_pressed("attack_slash"):
 			_perform_active_weapon_attack()
 		elif Input.is_action_just_pressed("attack_axe"):
-			_perform_axe_attack()
+			if current_weapon != WeaponType.BOW and current_weapon != WeaponType.CROSSBOW:
+				_perform_axe_attack()
 
 
 func _animate_weapon_slash() -> void:
@@ -440,17 +511,47 @@ func _perform_bow_attack_charged(charge_time: float) -> void:
 		return
 	attack_cooldown = 0.35
 	var charge_ratio: float = clampf(charge_time / 1.2, 0.3, 1.0)
-	var launch_speed: float = lerpf(25.0, 55.0, charge_ratio)
-	print("[Player] Released Charged Bow Arrow! Power:", charge_ratio, "Speed:", launch_speed)
+	var launch_speed: float = lerpf(85.0, 115.0, charge_ratio)
+	print("[Player] Released Bow Arrow! Power:", charge_ratio, "Speed:", launch_speed)
 
 	var arrow_inst: Node3D = bow_scene.instantiate() as Node3D
 	get_parent().add_child(arrow_inst)
-	arrow_inst.global_position = camera.global_position + -camera.global_transform.basis.z * 0.8
-	var shoot_dir: Vector3 = -camera.global_transform.basis.z
+	
+	# 1. Determine spawn origin (player body in 3rd person, camera in FPS)
+	var spawn_origin: Vector3
+	if is_fps_aim_toggled:
+		spawn_origin = camera.global_position
+	else:
+		spawn_origin = global_position + Vector3(0.0, 1.3, 0.0)
+
+	# 2. 3D Crosshair Target Convergence Raycast
+	var target_point: Vector3
+	var space_state: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
+	if space_state and camera:
+		var cam_from: Vector3 = camera.global_position
+		var cam_to: Vector3 = cam_from + (-camera.global_transform.basis.z * 200.0)
+		var ray_query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(cam_from, cam_to)
+		ray_query.collision_mask = 3 # Terrain & Enemies
+		ray_query.exclude = [self]
+		if is_instance_valid(self):
+			ray_query.exclude.append(get_rid())
+
+		var hit_res: Dictionary = space_state.intersect_ray(ray_query)
+		if not hit_res.is_empty():
+			target_point = hit_res.get("position", cam_to)
+		else:
+			target_point = cam_to
+	else:
+		target_point = camera.global_position + (-camera.global_transform.basis.z * 200.0)
+
+	# 3. Calculate exact shooting direction from spawn_origin to target_point
+	var shoot_dir: Vector3 = (target_point - spawn_origin).normalized()
+	arrow_inst.global_position = spawn_origin + (shoot_dir * 1.2)
+
+	if "launch_speed" in arrow_inst:
+		arrow_inst.set("launch_speed", launch_speed)
 	if arrow_inst.has_method("setup_direction"):
 		arrow_inst.call("setup_direction", shoot_dir)
-		if "launch_speed" in arrow_inst:
-			arrow_inst.set("launch_speed", launch_speed)
 
 
 func _perform_spear_attack() -> void:
@@ -479,11 +580,32 @@ func _perform_axe_attack() -> void:
 		return
 	attack_cooldown = 0.45
 	_animate_weapon_slash()
-	print("[Player] Executing Right-Click Straight Cursor-Aimed Thrown Axe from 2.2m height!")
+	print("[Player] Executing Right-Click 3D Crosshair Converged Thrown Axe!")
 	var axe_inst: Node3D = axe_scene.instantiate() as Node3D
 	get_parent().add_child(axe_inst)
-	axe_inst.global_position = global_position + Vector3.UP * 2.2 + transform.basis.z * -0.5
-	var throw_dir: Vector3 = -camera.global_transform.basis.z
+	
+	var spawn_origin: Vector3 = global_position + Vector3(0.0, 1.8, 0.0)
+	var target_point: Vector3
+	var space_state: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
+	if space_state and camera:
+		var cam_from: Vector3 = camera.global_position
+		var cam_to: Vector3 = cam_from + (-camera.global_transform.basis.z * 200.0)
+		var ray_query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(cam_from, cam_to)
+		ray_query.collision_mask = 3
+		ray_query.exclude = [self]
+		if is_instance_valid(self):
+			ray_query.exclude.append(get_rid())
+
+		var hit_res: Dictionary = space_state.intersect_ray(ray_query)
+		if not hit_res.is_empty():
+			target_point = hit_res.get("position", cam_to)
+		else:
+			target_point = cam_to
+	else:
+		target_point = camera.global_position + (-camera.global_transform.basis.z * 200.0)
+
+	var throw_dir: Vector3 = (target_point - spawn_origin).normalized()
+	axe_inst.global_position = spawn_origin + (throw_dir * 0.8)
 	if axe_inst.has_method("setup_direction"):
 		axe_inst.call("setup_direction", throw_dir)
 

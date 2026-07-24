@@ -20,7 +20,7 @@ func _ready() -> void:
 	target_node = get_parent() as Node3D
 	if target_node:
 		add_excluded_object(target_node.get_rid())
-		global_position = target_node.global_position + Vector3(0, 1.6, 0)
+		global_position = target_node.global_position + Vector3(0, 2.4, 0)
 
 	# Lock mouse cursor into center for smooth 3D camera orbit
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -29,7 +29,7 @@ func _ready() -> void:
 func _physics_process(_delta: float) -> void:
 	# Follow player position without inheriting player rotation
 	if target_node and is_instance_valid(target_node):
-		global_position = target_node.global_position + Vector3(0, 1.6, 0)
+		global_position = target_node.global_position + Vector3(0, 2.4, 0)
 
 
 func _unhandled_input(event: InputEvent) -> void:

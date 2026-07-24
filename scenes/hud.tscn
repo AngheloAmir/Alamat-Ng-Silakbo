@@ -58,9 +58,9 @@ text = "CONTROLS GUIDE:
 • Spacebar : Standard Jump
 • Q : Super High Jump
 • E : Toggle 3X Fly Mode ON / OFF (72 m/s)
-• Keys 1-4 / Scroll : Select Weapon Slot
-• Left Click : Use Weapon (Hold/Release for Bow Aim)
-• Right Click : Basketball High-Arc Thrown Axe
+• Keys 1-8 / Scroll : Select Weapon Slot (8 Weapons!)
+• Left Click : Fire Weapon / Arrow Instantly
+• Right Click : Toggle FPS Aim (Bow/Crossbow) / Thrown Axe (Melee)
 • Y : Advance Time of Day (Sunrise, Noon, Dusk, Night)
 • T : Cycle Seasons (Spring, Summer, Autumn, Winter)
 • R : Spawn Mob at Position (Unlimited)"
