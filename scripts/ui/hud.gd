@@ -17,6 +17,10 @@ extends CanvasLayer
 @onready var slot_2: PanelContainer = $HotbarPanel/HBoxContainer/Slot2
 @onready var slot_3: PanelContainer = $HotbarPanel/HBoxContainer/Slot3
 @onready var slot_4: PanelContainer = $HotbarPanel/HBoxContainer/Slot4
+@onready var slot_5: PanelContainer = get_node_or_null("HotbarPanel/HBoxContainer/Slot5")
+@onready var slot_6: PanelContainer = get_node_or_null("HotbarPanel/HBoxContainer/Slot6")
+@onready var slot_7: PanelContainer = get_node_or_null("HotbarPanel/HBoxContainer/Slot7")
+@onready var slot_8: PanelContainer = get_node_or_null("HotbarPanel/HBoxContainer/Slot8")
 
 var fps_update_timer: float = 0.0
 
@@ -78,7 +82,7 @@ func _on_weapon_slot_changed(slot_idx: int) -> void:
 
 
 func _highlight_hotbar_slot(active_idx: int) -> void:
-	var slots: Array[PanelContainer] = [slot_1, slot_2, slot_3, slot_4]
+	var slots: Array[PanelContainer] = [slot_1, slot_2, slot_3, slot_4, slot_5, slot_6, slot_7, slot_8]
 	for i in range(slots.size()):
 		var slot_panel: PanelContainer = slots[i]
 		if not slot_panel:

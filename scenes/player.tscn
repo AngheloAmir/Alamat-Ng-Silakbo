@@ -1,19 +1,12 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene format=3 uid="uid://d1scsrims4pd0"]
 
-[ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
-[ext_resource type="Script" path="res://scripts/camera_rig.gd" id="2_rig"]
+[ext_resource type="Script" uid="uid://bx7gdibeefs11" path="res://scripts/player.gd" id="1_player"]
+[ext_resource type="Script" uid="uid://c1uxffnbgulcs" path="res://scripts/camera_rig.gd" id="2_rig"]
+[ext_resource type="PackedScene" uid="uid://b5hvnaajfvvhx" path="res://assets/kaykit/characters/Barbarian.glb" id="4_qlg0r"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.45
 height = 1.8
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_player"]
-radius = 0.45
-height = 1.8
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cyan"]
-albedo_color = Color(0.12, 0.65, 0.95, 1)
-roughness = 0.4
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_arrow_shaft"]
 top_radius = 0.025
@@ -29,49 +22,49 @@ bottom_radius = 0.08
 height = 0.3
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gold_tip"]
-albedo_color = Color(1.0, 0.8, 0.2, 1)
+albedo_color = Color(1, 0.8, 0.2, 1)
 metallic = 0.9
 roughness = 0.2
 
-[node name="Player" type="CharacterBody3D"]
-collision_layer = 1
-collision_mask = 1
+[node name="Player" type="CharacterBody3D" unique_id=1579795598]
 script = ExtResource("1_player")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=242819872]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_player")
 
-[node name="CapsuleMesh" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
-mesh = SubResource("CapsuleMesh_player")
-surface_material_override/0 = SubResource("StandardMaterial3D_cyan")
+[node name="WeaponMount" type="Node3D" parent="." unique_id=1725274180]
+transform = Transform3D(0.9254166, -0.0669873, 0.3730279, 0.1330222, 0.976378, -0.1699742, -0.3533842, 0.2069176, 0.9123019, 0.35, 0.75, -0.25)
 
-[node name="WeaponMount" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, -0.6)
+[node name="OffhandMount" type="Node3D" parent="." unique_id=1725274181]
+transform = Transform3D(0.9254166, 0.0669873, -0.3730279, -0.1330222, 0.976378, -0.1699742, 0.3533842, 0.2069176, 0.9123019, -0.35, 0.75, -0.25)
 
-[node name="CameraRig" type="SpringArm3D" parent="."]
+[node name="CameraRig" type="SpringArm3D" parent="." unique_id=1361425862]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 spring_length = 4.0
 margin = 0.2
 script = ExtResource("2_rig")
 
-[node name="Camera3D" type="Camera3D" parent="CameraRig"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
+[node name="Camera3D" type="Camera3D" parent="CameraRig" unique_id=1103455835]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3711617, 4)
 current = true
-fov = 75.0
 far = 800.0
 
-[node name="HeldArrow" type="Node3D" parent="CameraRig/Camera3D"]
+[node name="HeldArrow" type="Node3D" parent="CameraRig/Camera3D" unique_id=1232796507]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.38, -0.22, -0.65)
 visible = false
 
-[node name="Shaft" type="MeshInstance3D" parent="CameraRig/Camera3D/HeldArrow"]
+[node name="Shaft" type="MeshInstance3D" parent="CameraRig/Camera3D/HeldArrow" unique_id=1253985371]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0)
 mesh = SubResource("CylinderMesh_arrow_shaft")
 surface_material_override/0 = SubResource("StandardMaterial3D_wood_shaft")
 
-[node name="Tip" type="MeshInstance3D" parent="CameraRig/Camera3D/HeldArrow"]
+[node name="Tip" type="MeshInstance3D" parent="CameraRig/Camera3D/HeldArrow" unique_id=815998621]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, -0.6)
 mesh = SubResource("CylinderMesh_arrow_tip")
 surface_material_override/0 = SubResource("StandardMaterial3D_gold_tip")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=653396295]
+
+[node name="Barbarian" parent="." unique_id=750557364 instance=ExtResource("4_qlg0r")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)

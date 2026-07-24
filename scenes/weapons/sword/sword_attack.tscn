@@ -1,18 +1,9 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/weapons/sword/sword_attack.gd" id="1_sword"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_slash"]
 size = Vector3(2.2, 0.4, 1.2)
-
-[sub_resource type="BoxMesh" id="BoxMesh_blade"]
-size = Vector3(2.0, 0.08, 0.35)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cyan_blade"]
-albedo_color = Color(0.15, 0.85, 1.0, 1)
-emission_enabled = true
-emission = Color(0.2, 0.8, 1.0, 1)
-emission_energy_multiplier = 2.0
 
 [node name="SwordAttack" type="Area3D"]
 script = ExtResource("1_sword")
@@ -20,8 +11,3 @@ script = ExtResource("1_sword")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.0)
 shape = SubResource("BoxShape3D_slash")
-
-[node name="BladeMesh" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.0)
-mesh = SubResource("BoxMesh_blade")
-surface_material_override/0 = SubResource("StandardMaterial3D_cyan_blade")

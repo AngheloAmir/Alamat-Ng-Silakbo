@@ -71,7 +71,7 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -340.0
+offset_left = -660.0
 offset_top = -80.0
 offset_right = -20.0
 offset_bottom = -20.0
@@ -108,7 +108,7 @@ layout_mode = 2
 
 [node name="Label" type="Label" parent="HotbarPanel/HBoxContainer/Slot3"]
 layout_mode = 2
-text = "[3] SPEAR"
+text = "[3] STAFF"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -118,7 +118,47 @@ layout_mode = 2
 
 [node name="Label" type="Label" parent="HotbarPanel/HBoxContainer/Slot4"]
 layout_mode = 2
-text = "[4] HAMMER"
+text = "[4] AXE"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot5" type="PanelContainer" parent="HotbarPanel/HBoxContainer"]
+custom_minimum_size = Vector2(70, 50)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HotbarPanel/HBoxContainer/Slot5"]
+layout_mode = 2
+text = "[5] DAGGER"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot6" type="PanelContainer" parent="HotbarPanel/HBoxContainer"]
+custom_minimum_size = Vector2(70, 50)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HotbarPanel/HBoxContainer/Slot6"]
+layout_mode = 2
+text = "[6] HATCHET"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot7" type="PanelContainer" parent="HotbarPanel/HBoxContainer"]
+custom_minimum_size = Vector2(70, 50)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HotbarPanel/HBoxContainer/Slot7"]
+layout_mode = 2
+text = "[7] CROSSBOW"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot8" type="PanelContainer" parent="HotbarPanel/HBoxContainer"]
+custom_minimum_size = Vector2(70, 50)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HotbarPanel/HBoxContainer/Slot8"]
+layout_mode = 2
+text = "[8] WAND"
 horizontal_alignment = 1
 vertical_alignment = 1
 
