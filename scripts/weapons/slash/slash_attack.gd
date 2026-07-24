@@ -14,7 +14,8 @@ var hit_mobs: Array[Node] = []             # Prevent multi-hitting the same mob 
 func _ready() -> void:
 	# 1. Connect Area3D signal for body detection
 	var area: Area3D = $Area3D as Area3D
-	area.body_entered.connect(_on_body_entered)
+	if area:
+		area.body_entered.connect(_on_body_entered)
 	
 	# 2. Perform smooth arc swing animation using Godot 4 Tween
 	var tween: Tween = create_tween()

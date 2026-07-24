@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3 uid="uid://slashattack123"]
 
-[ext_resource type="Script" path="res://scripts/weapons/slash_attack.gd" id="1_slash"]
+[ext_resource type="Script" path="res://scripts/weapons/slash/slash_attack.gd" id="1_slash"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_blade"]
 size = Vector3(0.15, 0.15, 2.0)

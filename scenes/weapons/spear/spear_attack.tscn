@@ -1,13 +1,34 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=6 format=3]
 
-[ext_resource type="Script" path="res://scripts/weapons/spear/spear_attack.gd" id="1_spear"]
+[ext_resource type="Script" path="res://scripts/weapons/spear/spear_attack.gd" id="1_fireball"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_spear"]
-size = Vector3(1.2, 1.2, 4.5)
+[sub_resource type="BoxMesh" id="BoxMesh_fireball"]
+size = Vector3(0.7, 0.7, 0.7)
 
-[node name="SpearAttack" type="Area3D"]
-script = ExtResource("1_spear")
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fire"]
+albedo_color = Color(1, 0.35, 0.05, 1)
+emission_enabled = true
+emission = Color(1, 0.5, 0.1, 1)
+emission_energy_multiplier = 4.5
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.25)
-shape = SubResource("BoxShape3D_spear")
+[sub_resource type="SphereShape3D" id="SphereShape3D_hitbox"]
+radius = 0.75
+
+[node name="FireballProjectile" type="Node3D"]
+script = ExtResource("1_fireball")
+
+[node name="FireballMesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_fireball")
+surface_material_override/0 = SubResource("StandardMaterial3D_fire")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+light_color = Color(1, 0.5, 0.1, 1)
+light_energy = 4.5
+omni_range = 9.0
+
+[node name="Area3D" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 3
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("SphereShape3D_hitbox")

@@ -1,0 +1,27 @@
+[gd_scene load_steps=4 format=3 uid="uid://thrownaxe456"]
+
+[ext_resource type="Script" path="res://scripts/weapons/axe/thrown_axe.gd" id="1_axe"]
+[ext_resource type="PackedScene" path="res://assets/kaykit/props/axe_1handed.gltf" id="2_hatchet"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_hitbox"]
+radius = 0.6
+
+[node name="ThrownAxe" type="Node3D"]
+script = ExtResource("1_axe")
+
+[node name="AxeModel" type="Node3D" parent="."]
+
+[node name="HatchetMesh" parent="AxeModel" instance=ExtResource("2_hatchet")]
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, 0, -0.3, 0)
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+light_color = Color(1, 0.35, 0.1, 1)
+light_energy = 3.5
+omni_range = 6.0
+
+[node name="Area3D" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 3
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("SphereShape3D_hitbox")

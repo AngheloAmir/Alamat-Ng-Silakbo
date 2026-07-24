@@ -39,7 +39,10 @@ var sword_scene: PackedScene
 var bow_scene: PackedScene
 var spear_scene: PackedScene
 var hammer_scene: PackedScene
+var dagger_scene: PackedScene
 var axe_scene: PackedScene
+var crossbow_scene: PackedScene
+var wand_scene: PackedScene
 
 # Enemy scenes for Key 'R' manual spawning
 var static_scene: PackedScene
@@ -70,7 +73,10 @@ func _ready() -> void:
 	bow_scene = load("res://scenes/weapons/bow/arrow_projectile.tscn")
 	spear_scene = load("res://scenes/weapons/spear/spear_attack.tscn")
 	hammer_scene = load("res://scenes/weapons/hammer/hammer_slam.tscn")
-	axe_scene = load("res://scenes/thrown_axe.tscn")
+	dagger_scene = load("res://scenes/weapons/dagger/dagger_attack.tscn")
+	axe_scene = load("res://scenes/weapons/axe/thrown_axe.tscn")
+	crossbow_scene = load("res://scenes/weapons/crossbow/crossbow_bolt.tscn")
+	wand_scene = load("res://scenes/weapons/wand/wand_attack.tscn")
 
 	static_scene = load("res://scenes/enemy_static.tscn")
 	wander_scene = load("res://scenes/enemy_wander.tscn")
@@ -197,15 +203,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("spawn_mob_manual"):
 		_spawn_manual_random_mob()
 
-	# Right Click -> Toggle FPS Aim Mode for Bow / Crossbow
+	# Right Click -> Toggle FPS Aim Mode
 	elif event.is_action_pressed("attack_axe"):
-		if current_weapon == WeaponType.BOW or current_weapon == WeaponType.CROSSBOW:
-			is_fps_aim_toggled = !is_fps_aim_toggled
-			if is_fps_aim_toggled:
-				_start_bow_aim_camera_pan()
-			else:
-				_stop_bow_aim_camera_pan()
-			get_viewport().set_input_as_handled()
+		is_fps_aim_toggled = !is_fps_aim_toggled
+		if is_fps_aim_toggled:
+			_start_bow_aim_camera_pan()
+		else:
+			_stop_bow_aim_camera_pan()
+		get_viewport().set_input_as_handled()
 
 	# Weapon Slot Hotkey Selection (Keys 1-8)
 	elif event is InputEventKey and event.pressed:
@@ -399,12 +404,7 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		_update_character_animation(fly_move.length() > 0.1)
 		
-		if attack_cooldown <= 0.0:
-			if Input.is_action_just_pressed("attack_slash"):
-				_perform_active_weapon_attack()
-			elif Input.is_action_just_pressed("attack_axe"):
-				if current_weapon != WeaponType.BOW and current_weapon != WeaponType.CROSSBOW:
-					_perform_axe_attack()
+		_handle_weapon_attacks(delta)
 		return
 
 	# --- GROUNDED & JUMP PHYSICS ---
@@ -440,13 +440,17 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_update_character_animation(is_moving)
 
-	# Handle Weapon Attacks & Secondary Thrown Axe
-	if attack_cooldown <= 0.0:
-		if Input.is_action_just_pressed("attack_slash"):
+	# Handle Weapon Attacks (Continuous Auto-Fire for Crossbow / Charge for Bow)
+	_handle_weapon_attacks(delta)
+
+
+func _handle_weapon_attacks(_delta: float) -> void:
+	if current_weapon == WeaponType.CROSSBOW:
+		if attack_cooldown <= 0.0 and Input.is_action_pressed("attack_slash"):
 			_perform_active_weapon_attack()
-		elif Input.is_action_just_pressed("attack_axe"):
-			if current_weapon != WeaponType.BOW and current_weapon != WeaponType.CROSSBOW:
-				_perform_axe_attack()
+	else:
+		if attack_cooldown <= 0.0 and Input.is_action_just_pressed("attack_slash"):
+			_perform_active_weapon_attack()
 
 
 func _animate_weapon_slash() -> void:
@@ -486,14 +490,99 @@ func _animate_weapon_slam() -> void:
 # --- WEAPON ATTACK EXECUTION ---
 func _perform_active_weapon_attack() -> void:
 	match current_weapon:
-		WeaponType.SWORD, WeaponType.DAGGER, WeaponType.AXE_1H:
+		WeaponType.SWORD:
 			_perform_sword_attack()
-		WeaponType.BOW, WeaponType.CROSSBOW:
+		WeaponType.BOW:
 			_perform_bow_attack_charged(0.8)
-		WeaponType.SPEAR, WeaponType.WAND:
+		WeaponType.SPEAR:
 			_perform_spear_attack()
 		WeaponType.HAMMER:
 			_perform_hammer_attack()
+		WeaponType.DAGGER:
+			_perform_dagger_attack()
+		WeaponType.AXE_1H:
+			_perform_axe_attack()
+		WeaponType.CROSSBOW:
+			_perform_crossbow_attack()
+		WeaponType.WAND:
+			_perform_wand_attack()
+
+
+func _perform_dagger_attack() -> void:
+	if not dagger_scene:
+		return
+	attack_cooldown = 0.2
+	_animate_weapon_thrust()
+	print("[Player] Executing Slot 5: Dagger Rapid Stab!")
+	var dagger_inst: Node3D = dagger_scene.instantiate() as Node3D
+	weapon_mount.add_child(dagger_inst)
+
+
+func _perform_crossbow_attack() -> void:
+	if not crossbow_scene:
+		return
+	attack_cooldown = 0.18
+	print("[Player] Executing Slot 7: Crossbow Bolt Fire!")
+	var bolt_inst: Node3D = crossbow_scene.instantiate() as Node3D
+	get_parent().add_child(bolt_inst)
+	
+	var spawn_origin: Vector3 = camera.global_position if is_fps_aim_toggled else global_position + Vector3(0.0, 1.3, 0.0)
+	var target_point: Vector3
+	var space_state: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
+	if space_state and camera:
+		var cam_from: Vector3 = camera.global_position
+		var cam_to: Vector3 = cam_from + (-camera.global_transform.basis.z * 200.0)
+		var ray_query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(cam_from, cam_to)
+		ray_query.collision_mask = 3
+		ray_query.exclude = [self]
+		if is_instance_valid(self):
+			ray_query.exclude.append(get_rid())
+
+		var hit_res: Dictionary = space_state.intersect_ray(ray_query)
+		if not hit_res.is_empty():
+			target_point = hit_res.get("position", cam_to)
+		else:
+			target_point = cam_to
+	else:
+		target_point = camera.global_position + (-camera.global_transform.basis.z * 200.0)
+
+	var shoot_dir: Vector3 = (target_point - spawn_origin).normalized()
+	bolt_inst.global_position = spawn_origin + (shoot_dir * 1.0)
+	if bolt_inst.has_method("setup_direction"):
+		bolt_inst.call("setup_direction", shoot_dir)
+
+
+func _perform_wand_attack() -> void:
+	if not wand_scene:
+		return
+	attack_cooldown = 0.25
+	_animate_weapon_thrust()
+	print("[Player] Executing Slot 8: Wand Instant Straight Lightning Beam Strike!")
+	var wand_inst: Node3D = wand_scene.instantiate() as Node3D
+	get_parent().add_child(wand_inst)
+	
+	var spawn_origin: Vector3 = camera.global_position if is_fps_aim_toggled else global_position + Vector3(0.0, 1.4, 0.0)
+	var target_point: Vector3
+	var space_state: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
+	if space_state and camera:
+		var cam_from: Vector3 = camera.global_position
+		var cam_to: Vector3 = cam_from + (-camera.global_transform.basis.z * 200.0)
+		var ray_query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(cam_from, cam_to)
+		ray_query.collision_mask = 3
+		ray_query.exclude = [self]
+		if is_instance_valid(self):
+			ray_query.exclude.append(get_rid())
+
+		var hit_res: Dictionary = space_state.intersect_ray(ray_query)
+		if not hit_res.is_empty():
+			target_point = hit_res.get("position", cam_to)
+		else:
+			target_point = cam_to
+	else:
+		target_point = camera.global_position + (-camera.global_transform.basis.z * 200.0)
+
+	if wand_inst.has_method("setup_beam"):
+		wand_inst.call("setup_beam", spawn_origin, target_point)
 
 
 func _perform_sword_attack() -> void:
@@ -559,9 +648,34 @@ func _perform_spear_attack() -> void:
 		return
 	attack_cooldown = 0.35
 	_animate_weapon_thrust()
-	print("[Player] Executing Slot 3: Spear Forward Box Thrust!")
-	var spear_inst: Node3D = spear_scene.instantiate() as Node3D
-	weapon_mount.add_child(spear_inst)
+	print("[Player] Executing Slot 3: Staff Fireball Light-Emitting Launch!")
+	var fireball_inst: Node3D = spear_scene.instantiate() as Node3D
+	get_parent().add_child(fireball_inst)
+
+	var spawn_origin: Vector3 = camera.global_position if is_fps_aim_toggled else global_position + Vector3(0.0, 1.4, 0.0)
+	var target_point: Vector3
+	var space_state: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
+	if space_state and camera:
+		var cam_from: Vector3 = camera.global_position
+		var cam_to: Vector3 = cam_from + (-camera.global_transform.basis.z * 200.0)
+		var ray_query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(cam_from, cam_to)
+		ray_query.collision_mask = 3
+		ray_query.exclude = [self]
+		if is_instance_valid(self):
+			ray_query.exclude.append(get_rid())
+
+		var hit_res: Dictionary = space_state.intersect_ray(ray_query)
+		if not hit_res.is_empty():
+			target_point = hit_res.get("position", cam_to)
+		else:
+			target_point = cam_to
+	else:
+		target_point = camera.global_position + (-camera.global_transform.basis.z * 200.0)
+
+	var shoot_dir: Vector3 = (target_point - spawn_origin).normalized()
+	fireball_inst.global_position = spawn_origin + (shoot_dir * 1.2)
+	if fireball_inst.has_method("setup_direction"):
+		fireball_inst.call("setup_direction", shoot_dir)
 
 
 func _perform_hammer_attack() -> void:

@@ -1,0 +1,24 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/weapons/wand/wand_attack.gd" id="1_wand"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_lightning_beam"]
+size = Vector3(0.2, 0.2, 1.0)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lightning"]
+albedo_color = Color(0.25, 0.85, 1, 1)
+emission_enabled = true
+emission = Color(0.35, 0.95, 1, 1)
+emission_energy_multiplier = 6.0
+
+[node name="WandLightningBeam" type="Node3D"]
+script = ExtResource("1_wand")
+
+[node name="BeamMesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_lightning_beam")
+surface_material_override/0 = SubResource("StandardMaterial3D_lightning")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+light_color = Color(0.3, 0.9, 1, 1)
+light_energy = 8.0
+omni_range = 10.0

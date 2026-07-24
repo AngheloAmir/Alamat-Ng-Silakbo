@@ -12,10 +12,12 @@ Welcome to the **RockionSurvival** developer documentation! This file serves as 
 - **Massive $1400\text{m} \times 1400\text{m}$ Procedural Alpine Terrain**: $650\text{m}$ tall smooth rounded mountain peaks with dynamic height-based vertex normals and custom materials.
 - **4 Switchable Weapon System** (Slot Hotbar & Scroll Wheel):
   1. 🗡️ **Sword** (`Slot 1`): Melee slash arc in front of player.
-  2. 🏹 **Bow** (`Slot 2`): First-Person (FPS) aim zoom (holding Left-Click renders 3D held arrow on right screen side, hides capsule body, charges launch speed up to $55.0\text{m/s}$).
-  3. 🗡️ **Spear** (`Slot 3`): $4.5\text{m}$ forward box thrust sweep.
+  2. 🏹 **Bow** (`Slot 2`): Reddish light-emitting arrow ($95.0\text{m/s}$) with realistic ballistic gravity arc ($15.0\text{m/s}^2$).
+  3. 🔥 **Staff** (`Slot 3`): Heavy explosive Box Fireball with fast ballistic drop curve ($25.0\text{m/s}^2$) triggering an $8.5\text{m}$ AOE ground blast with mid-air shrinking ember particles and light emission (`OmniLight3D`).
   4. 🔨 **Hammer** (`Slot 4`): Heavy ground slam shockwave creating an expanding $6.5\text{m}$ radius ring AOE.
-  5. 🪓 **Thrown Axe** (`Right Click`): Straight high-speed ($38.0\text{m/s}$) cursor-aimed throw starting $2.2\text{m}$ above player head.
+  5. 🪓 **Hatchet** (`Slot 6`): Poly 3D hatchet prop model with reddish light emission, ballistic drop trajectory, and sharp non-explosive impact spark particle burst on collision.
+  6. 🏹 **Crossbow** (`Slot 7`): Rapid continuous auto-fire bolt stream ($0.18\text{s}$ interval / $330\text{ RPM}$) while holding Left Click, featuring 3D crosshair raycast targeting and amber light emission (`OmniLight3D`).
+  7. ⚡ **Wand** (`Slot 8`): Instant 3D crackling Zigzag Lightning Bolt composed of 7 connected jittering electric cyan segments stretching directly from player to target, unaffected by gravity.
 - **Dynamic Seasons & 4-Phase Day/Night Cycle**:
   - **4 Seasons** (`Key T`): Spring 🌸, Summer ☀️, Autumn 🍁, Winter ❄️.
   - **Time of Day** (`Key Y`): Sunrise 🌅, Noon ☀️, Dusk 🌇, Night 🌙.
@@ -45,12 +47,16 @@ RockionSurvival/
 │   ├── enemy_static.tscn             # Guard post mob variant scene
 │   ├── enemy_wander.tscn             # Wandering mob variant scene
 │   ├── enemy_chase.tscn              # Chasing mob variant scene
-│   ├── thrown_axe.tscn               # Right-click secondary thrown axe scene
 │   └── weapons/                      # Dedicated weapon scene subdirectories
 │       ├── sword/sword_attack.tscn   # Sword slash arc scene
 │       ├── bow/arrow_projectile.tscn # Bow arrow projectile scene
 │       ├── spear/spear_attack.tscn   # Spear 4.5m forward box thrust scene
-│       └── hammer/hammer_slam.tscn   # Hammer expanding shockwave ring scene
+│       ├── hammer/hammer_slam.tscn   # Hammer expanding shockwave ring scene
+│       ├── dagger/dagger_attack.tscn # Dagger rapid stab scene
+│       ├── axe/thrown_axe.tscn       # Right-click / Slot 6 thrown axe scene
+│       ├── crossbow/crossbow_bolt.tscn # Crossbow bolt projectile scene
+│       ├── wand/wand_attack.tscn     # Wand magic wave scene
+│       └── slash/slash_attack.tscn   # Melee slash attack scene
 └── scripts/                          # GDScript Logic Files (.gd)
     ├── game_manager.gd               # Autoload Singleton (Server mob cap & global state)
     ├── player.gd                     # Player movement, fly mode, weapon switching, FPS bow aim
@@ -65,12 +71,16 @@ RockionSurvival/
     │   ├── enemy_static.gd           # Static guard mob behavior
     │   ├── enemy_wander.gd           # Wandering waypoint mob behavior
     │   └── enemy_chase.gd            # Player tracking chase mob behavior
-    └── weapons/
-        ├── thrown_axe.gd             # Right-click straight cursor-aimed thrown axe script
+    └── weapons/                      # Dedicated weapon script subdirectories
         ├── sword/sword_attack.gd     # Sword slash animation & collision script
         ├── bow/arrow_projectile.gd   # Charged arrow projectile script
         ├── spear/spear_attack.gd     # Spear forward box sweep script
-        └── hammer/hammer_slam.gd     # Hammer shockwave expansion script
+        ├── hammer/hammer_slam.gd     # Hammer shockwave expansion script
+        ├── dagger/dagger_attack.gd   # Dagger rapid stab script
+        ├── axe/thrown_axe.gd         # Thrown axe projectile script
+        ├── crossbow/crossbow_bolt.gd # Crossbow bolt projectile script
+        ├── wand/wand_attack.gd       # Wand magic wave script
+        └── slash/slash_attack.gd     # Melee slash attack script
 ```
 
 ---
@@ -137,10 +147,9 @@ graph TD
 | **Key E** | Toggle 3X Fly Mode ON / OFF ($72.0\text{m/s}$) |
 | **Keys 1, 2, 3, 4** | Select Weapon Slot (1: Sword, 2: Bow, 3: Spear, 4: Hammer) |
 | **Mouse Scroll Wheel** | Scroll through Hotbar Weapon Slots |
-| **Left Click (Press)** | Use Active Weapon (Sword Slash, Spear Thrust, Hammer Slam) |
-| **Left Click (Hold)** | **FPS Bow Aiming**: Zooms to first-person view, renders 3D arrow on right side, charges shot power |
-| **Left Click (Release)** | Fire Charged Bow Arrow ($25\text{m/s}$ - $55\text{m/s}$) |
-| **Right Click** | High-speed ($38\text{m/s}$) Cursor-Aimed Thrown Axe (Starts $2.2\text{m}$ above head) |
+| **Left Click (Click)** | Fire Active Weapon immediately (Sword, Bow, Staff, Hammer, Dagger, Hatchet, Wand) |
+| **Left Click (Hold)** | **Crossbow Auto-Fire**: Continuously auto-fires bolts at $0.18\text{s}$ interval ($330\text{ RPM}$) |
+| **Right Click** | Toggle FPS Aim Mode (zooms to first-person view, hides body, aligns crosshair) |
 | **Key T** | Cycle Seasons (Spring $\rightarrow$ Summer $\rightarrow$ Autumn $\rightarrow$ Winter) |
 | **Key Y** | Advance Time of Day (Sunrise $\rightarrow$ Noon $\rightarrow$ Dusk $\rightarrow$ Night) |
 | **Key R** | Spawn Random-Trait Mob at Player Position (Unlimited for testing) |

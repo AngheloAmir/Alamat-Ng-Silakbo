@@ -9,7 +9,7 @@
 extends Area3D
 
 @export var launch_speed: float = 95.0        # High-velocity arrow flight (m/s)
-@export var arrow_drop_gravity: float = 2.5   # Gentle realistic gravity drop over extreme distance
+@export var arrow_drop_gravity: float = 15.0  # Realistic gravity drop trajectory
 @export var max_lifetime: float = 5.0         # Despawn safety timer
 
 var velocity: Vector3 = Vector3.ZERO
