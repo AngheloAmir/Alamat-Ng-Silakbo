@@ -25,11 +25,46 @@ var day_time: float = 0.25                     # Range 0.0 (Sunrise) to 1.0
 @onready var terrain: Node3D = get_node_or_null("../Terrain")
 
 
+var weather_particles: GPUParticles3D = null
+
+
 func _ready() -> void:
 	if not world_env:
 		world_env = get_node_or_null("../WorldEnvironment")
 	call_deferred("_setup_mountain_sky")
+	call_deferred("_setup_particles")
 	call_deferred("_apply_season", current_season)
+
+
+func _setup_particles() -> void:
+	weather_particles = GPUParticles3D.new()
+	weather_particles.name = "SeasonWeatherParticles"
+	weather_particles.emitting = false
+	weather_particles.amount = 2200
+	weather_particles.lifetime = 8.0
+	weather_particles.visibility_aabb = AABB(Vector3(-150, -30, -150), Vector3(300, 60, 300))
+
+	var proc_mat: ParticleProcessMaterial = ParticleProcessMaterial.new()
+	proc_mat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	proc_mat.emission_box_extents = Vector3(140.0, 1.0, 140.0) # Matches 140m simulation distance!
+	proc_mat.direction = Vector3(0.2, -1.0, 0.1)
+	proc_mat.spread = 15.0
+	proc_mat.initial_velocity_min = 3.0
+	proc_mat.initial_velocity_max = 6.5
+	proc_mat.gravity = Vector3(0.0, -2.5, 0.0)
+	proc_mat.scale_min = 0.8
+	proc_mat.scale_max = 1.6
+	proc_mat.angle_min = -180.0
+	proc_mat.angle_max = 180.0
+	proc_mat.angular_velocity_min = -60.0
+	proc_mat.angular_velocity_max = 60.0
+	weather_particles.process_material = proc_mat
+
+	var quad_mesh: QuadMesh = QuadMesh.new()
+	quad_mesh.size = Vector2(0.22, 0.22)
+	weather_particles.draw_pass_1 = quad_mesh
+
+	add_child(weather_particles)
 
 
 func _setup_mountain_sky() -> void:
@@ -45,13 +80,32 @@ func _setup_mountain_sky() -> void:
 		print("[WeatherManager] Failed to load mountain_bg.png, error: ", err)
 		return
 	var tex: ImageTexture = ImageTexture.create_from_image(img)
-	var pano_mat: PanoramaSkyMaterial = PanoramaSkyMaterial.new()
-	pano_mat.panorama = tex
+
+	var sky_shader: Shader = Shader.new()
+	sky_shader.code = """
+	shader_type sky;
+
+	uniform sampler2D panorama_tex : filter_linear, repeat_enable;
+	uniform vec4 sky_tint : source_color = vec4(1.0, 1.0, 1.0, 1.0);
+	uniform float energy : hint_range(0.0, 10.0) = 1.0;
+
+	void sky() {
+		vec3 base_color = texture(panorama_tex, SKY_COORDS).rgb;
+		COLOR = base_color * sky_tint.rgb * energy;
+	}
+	"""
+
+	var shader_mat: ShaderMaterial = ShaderMaterial.new()
+	shader_mat.shader = sky_shader
+	shader_mat.set_shader_parameter("panorama_tex", tex)
+	shader_mat.set_shader_parameter("sky_tint", Color(1.0, 1.0, 1.0, 1.0))
+	shader_mat.set_shader_parameter("energy", 1.0)
+
 	var sky: Sky = Sky.new()
-	sky.sky_material = pano_mat
+	sky.sky_material = shader_mat
 	world_env.environment.background_mode = Environment.BG_SKY
 	world_env.environment.sky = sky
-	print("[WeatherManager] Mountain skybox applied successfully!")
+	print("[WeatherManager] Custom tintable mountain skybox applied successfully!")
 
 
 func _get_season_tint() -> Color:
@@ -101,6 +155,10 @@ func _process(delta: float) -> void:
 	day_time += (delta / day_cycle_duration)
 	if day_time >= 1.0:
 		day_time -= 1.0
+
+	var player: Node3D = GameManager.get_player()
+	if player and is_instance_valid(player) and weather_particles:
+		weather_particles.global_position = player.global_position + Vector3(0.0, 15.0, 0.0)
 
 	_update_environment_and_sun(delta)
 
@@ -154,22 +212,33 @@ func _update_environment_and_sun(delta: float) -> void:
 
 	else:
 		# --- NIGHT (0.75 - 1.00) ---
-		target_sky_top = Color(0.02, 0.04, 0.12)
-		target_horizon = Color(0.05, 0.08, 0.18)
-		target_sun_color = Color(0.12, 0.18, 0.35)
-		target_sun_energy = 0.03
-		target_ambient_color = Color(0.04, 0.06, 0.14)
-		target_ambient_energy = 0.18
+		target_sky_top = Color(0.04, 0.08, 0.22)
+		target_horizon = Color(0.10, 0.16, 0.32)
+		target_sun_color = Color(0.40, 0.55, 0.85)
+		target_sun_energy = 0.20 # Bright clear moonlight!
+		target_ambient_color = Color(0.18, 0.25, 0.42) # Atmospheric night ambient
+		target_ambient_energy = 0.45 # Clear ground illumination
 		target_render_far = 2000.0
 
 	# 2. Apply Season Tint Modifier
 	var season_tint: Color = _get_season_tint()
 	target_horizon = target_horizon * season_tint
 
-	# 3. Rotate Sun Directional Light around sky and update sun color & energy
+	# 3. Position Sun / Moon Directional Light (Always pointing downward from above horizon!)
 	if sun_light:
-		var sun_angle_rad: float = (day_time * TAU) - (PI * 0.5)
-		sun_light.rotation.x = sun_angle_rad
+		if day_time < 0.50:
+			# Daytime: Sun moves East -> Noon -> West
+			var day_progress: float = day_time / 0.50
+			var sun_elevation: float = sin(day_progress * PI) * deg_to_rad(60.0) + deg_to_rad(15.0)
+			sun_light.rotation.x = -sun_elevation
+			sun_light.rotation.y = day_progress * PI
+		else:
+			# Nighttime: Moon moves West -> Midnight -> East
+			var night_progress: float = (day_time - 0.50) / 0.50
+			var moon_elevation: float = sin(night_progress * PI) * deg_to_rad(45.0) + deg_to_rad(20.0)
+			sun_light.rotation.x = -moon_elevation
+			sun_light.rotation.y = PI + (night_progress * PI)
+
 		sun_light.light_color = sun_light.light_color.lerp(target_sun_color, delta * 2.0)
 		sun_light.light_energy = lerpf(sun_light.light_energy, target_sun_energy, delta * 2.0)
 
@@ -178,9 +247,49 @@ func _update_environment_and_sun(delta: float) -> void:
 	env.ambient_light_color = env.ambient_light_color.lerp(target_ambient_color, delta * 2.0)
 	env.ambient_light_energy = lerpf(env.ambient_light_energy, target_ambient_energy, delta * 2.0)
 
-	# 5. Apply Sky Colors
+	# 5. Apply Sky Material Colors / Tint / Energy (ShaderMaterial vs PanoramaSkyMaterial vs ProceduralSkyMaterial)
 	if env.sky and env.sky.sky_material:
-		if env.sky.sky_material is ProceduralSkyMaterial:
+		var target_sky_tint: Color = Color(1.0, 1.0, 1.0)
+		var target_sky_energy: float = 1.0
+
+		if day_time < 0.25:
+			# --- SUNRISE (0.0 - 0.25) ---
+			var t: float = day_time / 0.25
+			target_sky_tint = Color(0.18, 0.28, 0.55).lerp(Color(1.0, 0.70, 0.50), t)
+			target_sky_energy = lerpf(0.45, 1.0, t)
+
+		elif day_time < 0.50:
+			# --- NOON (0.25 - 0.50) ---
+			target_sky_tint = Color(1.0, 1.0, 1.0)
+			target_sky_energy = 1.0
+
+		elif day_time < 0.75:
+			# --- DUSK (0.50 - 0.75) ---
+			var t: float = (day_time - 0.50) / 0.25
+			target_sky_tint = Color(1.0, 1.0, 1.0).lerp(Color(0.85, 0.45, 0.30), t)
+			target_sky_energy = lerpf(1.0, 0.45, t)
+
+		else:
+			# --- NIGHT (0.75 - 1.00) ---
+			# Rich moonlit blue night sky!
+			target_sky_tint = Color(0.18, 0.28, 0.55)
+			target_sky_energy = 0.45
+
+		if env.sky.sky_material is ShaderMaterial:
+			var mat: ShaderMaterial = env.sky.sky_material as ShaderMaterial
+			var curr_tint_param = mat.get_shader_parameter("sky_tint")
+			var curr_energy_param = mat.get_shader_parameter("energy")
+			var curr_tint: Color = curr_tint_param if curr_tint_param is Color else Color(1.0, 1.0, 1.0)
+			var curr_energy: float = curr_energy_param if curr_energy_param is float else 1.0
+
+			mat.set_shader_parameter("sky_tint", curr_tint.lerp(target_sky_tint, delta * 2.0))
+			mat.set_shader_parameter("energy", lerpf(curr_energy, target_sky_energy, delta * 2.0))
+
+		elif env.sky.sky_material is PanoramaSkyMaterial:
+			var pano_mat: PanoramaSkyMaterial = env.sky.sky_material as PanoramaSkyMaterial
+			pano_mat.energy_multiplier = lerpf(pano_mat.energy_multiplier, target_sky_energy, delta * 2.0)
+
+		elif env.sky.sky_material is ProceduralSkyMaterial:
 			var sky_mat: ProceduralSkyMaterial = env.sky.sky_material as ProceduralSkyMaterial
 			sky_mat.sky_top_color = sky_mat.sky_top_color.lerp(target_sky_top, delta * 2.0)
 			sky_mat.sky_horizon_color = sky_mat.sky_horizon_color.lerp(target_horizon, delta * 2.0)
@@ -204,11 +313,71 @@ func _update_environment_and_sun(delta: float) -> void:
 		if cam:
 			cam.far = lerpf(cam.far, target_render_far, delta * 1.5)
 
+	# 8. Update Particle Lighting & Tint for Day/Night Cycle
+	if weather_particles and weather_particles.emitting and weather_particles.material_override is StandardMaterial3D:
+		var part_mat: StandardMaterial3D = weather_particles.material_override as StandardMaterial3D
+		var base_season_color: Color = Color(0.94, 0.97, 1.0)
+		if current_season == Season.AUTUMN:
+			base_season_color = Color(0.92, 0.48, 0.18)
+
+		var target_tint: Color = Color(1.0, 1.0, 1.0)
+		if day_time < 0.25:
+			# Sunrise
+			target_tint = Color(0.35, 0.50, 0.75).lerp(Color(1.0, 0.80, 0.60), day_time / 0.25)
+		elif day_time < 0.50:
+			# Noon
+			target_tint = Color(1.0, 1.0, 1.0)
+		elif day_time < 0.75:
+			# Dusk
+			target_tint = Color(1.0, 1.0, 1.0).lerp(Color(0.85, 0.55, 0.38), (day_time - 0.50) / 0.25)
+		else:
+			# Night: Dark cool blue tint matching night lighting
+			target_tint = Color(0.22, 0.35, 0.60)
+
+		part_mat.albedo_color = part_mat.albedo_color.lerp(base_season_color * target_tint, delta * 2.0)
+
 
 func _apply_season(season: Season) -> void:
 	var season_name: String = get_current_season_name()
 	print("[WeatherManager] Season switched to:", season_name)
 	_set_terrain_tint(_get_season_tint())
+
+	if weather_particles:
+		var proc_mat: ParticleProcessMaterial = weather_particles.process_material as ParticleProcessMaterial
+		var quad_mesh: QuadMesh = weather_particles.draw_pass_1 as QuadMesh
+		var mat: StandardMaterial3D = StandardMaterial3D.new()
+		mat.shading_mode = StandardMaterial3D.SHADING_MODE_PER_PIXEL
+		mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+
+		match season:
+			Season.SPRING, Season.SUMMER:
+				weather_particles.emitting = false
+
+			Season.AUTUMN:
+				# Autumn: Falling 2D leaf sprites over 140m simulation distance (650 amount)
+				weather_particles.amount = 650
+				mat.albedo_color = Color(0.92, 0.48, 0.18, 0.90)
+				if quad_mesh:
+					quad_mesh.size = Vector2(0.28, 0.20)
+				weather_particles.material_override = mat
+				if proc_mat:
+					proc_mat.initial_velocity_min = 2.0
+					proc_mat.initial_velocity_max = 4.0
+				weather_particles.emitting = true
+
+			Season.WINTER:
+				# Winter: Falling 2D snow sprites over 140m simulation distance (2200 amount)
+				weather_particles.amount = 2200
+				mat.albedo_color = Color(0.94, 0.97, 1.0, 0.90)
+				if quad_mesh:
+					quad_mesh.size = Vector2(0.22, 0.22)
+				weather_particles.material_override = mat
+				if proc_mat:
+					proc_mat.initial_velocity_min = 3.5
+					proc_mat.initial_velocity_max = 7.0
+				weather_particles.emitting = true
+
 	emit_signal("season_changed", season_name)
 
 
